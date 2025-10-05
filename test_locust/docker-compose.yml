@@ -1,0 +1,46 @@
+services:
+  # Your Product API service
+  product-api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - loadtest
+
+  # Locust master (web UI and coordination)
+  locust-master:
+    image: locustio/locust:2.15.1
+    ports:
+      - "8089:8089"  # Web UI
+    volumes:
+      - ./locustfile.py:/mnt/locust/locustfile.py
+    command: -f /mnt/locust/locustfile.py --master --master-bind-port=5557
+    depends_on:
+      product-api:
+        condition: service_healthy
+    networks:
+      - loadtest
+
+  # Locust workers (can scale this up)
+  locust-worker:
+    image: locustio/locust:2.15.1
+    volumes:
+      - ./locustfile.py:/mnt/locust/locustfile.py
+    command: -f /mnt/locust/locustfile.py --worker --master-host=locust-master --master-port=5557
+    depends_on:
+      - locust-master
+    networks:
+      - loadtest
+    # Scale workers with: docker-compose up --scale locust-worker=4
+
+networks:
+  loadtest:
+    driver: bridge

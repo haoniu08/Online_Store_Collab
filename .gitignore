@@ -81,3 +81,6 @@ Thumbs.db
 
 # Test images (these look like test images)
 img_tests/
+
+
+**/venv/
