@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -105,6 +106,36 @@ func (h *ProductHandler) AddProductDetails(w http.ResponseWriter, r *http.Reques
 
 	// Return 204 No Content on success
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// SearchProducts handles GET /products/search?q={query}
+// This is the key endpoint for Homework 6 - searches exactly 100 products per request
+func (h *ProductHandler) SearchProducts(w http.ResponseWriter, r *http.Request) {
+	// Get query parameter
+	query := r.URL.Query().Get("q")
+	if query == "" {
+		respondWithError(w, http.StatusBadRequest, "INVALID_INPUT",
+			"Missing query parameter", "Query parameter 'q' is required")
+		return
+	}
+
+	// Record start time for performance measurement
+	startTime := time.Now()
+
+	// Perform search - exactly 100 products checked as per homework requirement
+	searchResult, err := h.store.SearchProducts(query, 100, 20)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "INTERNAL_ERROR",
+			"Search failed", err.Error())
+		return
+	}
+
+	// Add search time to response
+	searchDuration := time.Since(startTime)
+	searchResult.SearchTime = searchDuration.String()
+
+	// Return search results
+	respondWithJSON(w, http.StatusOK, searchResult)
 }
 
 // Helper functions for responses
