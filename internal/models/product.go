@@ -7,12 +7,19 @@ import (
 
 // Product represents a product in the e-commerce system
 type Product struct {
+	// Existing fields for compatibility
 	ProductID    int32  `json:"product_id"`
 	SKU          string `json:"sku"`
 	Manufacturer string `json:"manufacturer"`
 	CategoryID   int32  `json:"category_id"`
 	Weight       int32  `json:"weight"`
 	SomeOtherID  int32  `json:"some_other_id"`
+
+	// New fields for Homework 6 search functionality
+	Name        string `json:"name"`
+	Category    string `json:"category"`
+	Description string `json:"description"`
+	Brand       string `json:"brand"`
 }
 
 // Error represents an API error response
@@ -20,6 +27,13 @@ type Error struct {
 	Error   string `json:"error"`
 	Message string `json:"message"`
 	Details string `json:"details,omitempty"`
+}
+
+// SearchResponse represents the response format for product search
+type SearchResponse struct {
+	Products   []Product `json:"products"`              // Max 20 results
+	TotalFound int       `json:"total_found"`           // Total matches found
+	SearchTime string    `json:"search_time,omitempty"` // Optional search time
 }
 
 // Validate checks if the product data is valid according to OpenAPI spec
@@ -52,6 +66,27 @@ func (p *Product) Validate() error {
 	// some_other_id: minimum 1
 	if p.SomeOtherID < 1 {
 		return errors.New("some_other_id must be at least 1")
+	}
+
+	// New field validations for Homework 6
+	// name: required for search functionality
+	if len(p.Name) < 1 || len(p.Name) > 200 {
+		return errors.New("name must be between 1 and 200 characters")
+	}
+
+	// category: required for search functionality
+	if len(p.Category) < 1 || len(p.Category) > 100 {
+		return errors.New("category must be between 1 and 100 characters")
+	}
+
+	// description: optional but if provided, should have reasonable length
+	if len(p.Description) > 1000 {
+		return errors.New("description must be at most 1000 characters")
+	}
+
+	// brand: required for search functionality
+	if len(p.Brand) < 1 || len(p.Brand) > 100 {
+		return errors.New("brand must be between 1 and 100 characters")
 	}
 
 	return nil
