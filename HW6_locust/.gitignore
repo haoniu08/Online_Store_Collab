@@ -1,0 +1,7 @@
+# Locust test results
+results/*.html
+results/*.csv
+results/*.log
+
+# But keep the directory
+!results/.gitkeep
