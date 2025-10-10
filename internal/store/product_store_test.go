@@ -6,7 +6,7 @@ import (
 )
 
 func TestProductStore_AddOrUpdateProduct(t *testing.T) {
-	store := NewProductStore()
+	store := NewEmptyProductStore()
 
 	product := &models.Product{
 		ProductID:    1,
@@ -15,6 +15,10 @@ func TestProductStore_AddOrUpdateProduct(t *testing.T) {
 		CategoryID:   1,
 		Weight:       100,
 		SomeOtherID:  1,
+		Name:         "Test Product",
+		Category:     "Electronics",
+		Description:  "Test description",
+		Brand:        "TestBrand",
 	}
 
 	// Test adding a new product
@@ -46,7 +50,7 @@ func TestProductStore_AddOrUpdateProduct(t *testing.T) {
 }
 
 func TestProductStore_GetProduct(t *testing.T) {
-	store := NewProductStore()
+	store := NewEmptyProductStore()
 
 	product := &models.Product{
 		ProductID:    1,
@@ -55,6 +59,10 @@ func TestProductStore_GetProduct(t *testing.T) {
 		CategoryID:   1,
 		Weight:       100,
 		SomeOtherID:  1,
+		Name:         "Test Product",
+		Category:     "Electronics",
+		Description:  "Test description",
+		Brand:        "TestBrand",
 	}
 
 	// Test getting non-existent product
@@ -83,7 +91,7 @@ func TestProductStore_GetProduct(t *testing.T) {
 }
 
 func TestProductStore_ProductExists(t *testing.T) {
-	store := NewProductStore()
+	store := NewEmptyProductStore()
 
 	// Test non-existent product
 	if store.ProductExists(1) {
@@ -98,6 +106,10 @@ func TestProductStore_ProductExists(t *testing.T) {
 		CategoryID:   1,
 		Weight:       100,
 		SomeOtherID:  1,
+		Name:         "Test Product",
+		Category:     "Electronics",
+		Description:  "Test description",
+		Brand:        "TestBrand",
 	}
 	store.AddOrUpdateProduct(product)
 
@@ -108,7 +120,7 @@ func TestProductStore_ProductExists(t *testing.T) {
 }
 
 func TestProductStore_GetAllProducts(t *testing.T) {
-	store := NewProductStore()
+	store := NewEmptyProductStore()
 
 	// Test empty store
 	products := store.GetAllProducts()
@@ -117,8 +129,8 @@ func TestProductStore_GetAllProducts(t *testing.T) {
 	}
 
 	// Add multiple products
-	product1 := &models.Product{ProductID: 1, SKU: "ABC123", Manufacturer: "Mfg1", CategoryID: 1, Weight: 100, SomeOtherID: 1}
-	product2 := &models.Product{ProductID: 2, SKU: "DEF456", Manufacturer: "Mfg2", CategoryID: 2, Weight: 200, SomeOtherID: 2}
+	product1 := &models.Product{ProductID: 1, SKU: "ABC123", Manufacturer: "Mfg1", CategoryID: 1, Weight: 100, SomeOtherID: 1, Name: "Product 1", Category: "Electronics", Brand: "Brand1"}
+	product2 := &models.Product{ProductID: 2, SKU: "DEF456", Manufacturer: "Mfg2", CategoryID: 2, Weight: 200, SomeOtherID: 2, Name: "Product 2", Category: "Books", Brand: "Brand2"}
 
 	store.AddOrUpdateProduct(product1)
 	store.AddOrUpdateProduct(product2)
@@ -139,7 +151,7 @@ func TestProductStore_GetAllProducts(t *testing.T) {
 
 // Test concurrent access (basic test)
 func TestProductStore_ConcurrentAccess(t *testing.T) {
-	store := NewProductStore()
+	store := NewEmptyProductStore()
 
 	// This is a basic test - in real scenarios you'd want more sophisticated concurrency testing
 	done := make(chan bool, 2)
@@ -154,6 +166,9 @@ func TestProductStore_ConcurrentAccess(t *testing.T) {
 				CategoryID:   1,
 				Weight:       100,
 				SomeOtherID:  1,
+				Name:         "Test Product",
+				Category:     "Electronics",
+				Brand:        "TestBrand",
 			}
 			store.AddOrUpdateProduct(product)
 		}
@@ -177,5 +192,68 @@ func TestProductStore_ConcurrentAccess(t *testing.T) {
 	products := store.GetAllProducts()
 	if len(products) != 10 {
 		t.Errorf("Expected 10 products after concurrent operations, got %d", len(products))
+	}
+}
+
+// Test the new search functionality for Homework 6
+func TestProductStore_SearchProducts(t *testing.T) {
+	store := NewEmptyProductStore()
+
+	// Add test products
+	products := []*models.Product{
+		{ProductID: 1, SKU: "ABC1", Manufacturer: "Mfg1", CategoryID: 1, Weight: 100, SomeOtherID: 1, Name: "iPhone 15", Category: "Electronics", Brand: "Apple"},
+		{ProductID: 2, SKU: "ABC2", Manufacturer: "Mfg2", CategoryID: 2, Weight: 200, SomeOtherID: 2, Name: "MacBook Pro", Category: "Electronics", Brand: "Apple"},
+		{ProductID: 3, SKU: "ABC3", Manufacturer: "Mfg3", CategoryID: 3, Weight: 300, SomeOtherID: 3, Name: "Harry Potter", Category: "Books", Brand: "Scholastic"},
+		{ProductID: 4, SKU: "ABC4", Manufacturer: "Mfg4", CategoryID: 4, Weight: 400, SomeOtherID: 4, Name: "Learning Go", Category: "Books", Brand: "OReilly"},
+		{ProductID: 5, SKU: "ABC5", Manufacturer: "Mfg5", CategoryID: 5, Weight: 500, SomeOtherID: 5, Name: "Coffee Table", Category: "Home", Brand: "IKEA"},
+	}
+
+	for _, p := range products {
+		store.AddOrUpdateProduct(p)
+	}
+
+	// Test search by name
+	result, err := store.SearchProducts("iPhone", 10, 5)
+	if err != nil {
+		t.Errorf("SearchProducts() error = %v", err)
+	}
+	if len(result.Products) != 1 {
+		t.Errorf("Expected 1 product for 'iPhone', got %d", len(result.Products))
+	}
+	if result.TotalFound != 1 {
+		t.Errorf("Expected total_found = 1, got %d", result.TotalFound)
+	}
+
+	// Test search by category
+	result, err = store.SearchProducts("Electronics", 10, 5)
+	if err != nil {
+		t.Errorf("SearchProducts() error = %v", err)
+	}
+	if len(result.Products) != 2 {
+		t.Errorf("Expected 2 products for 'Electronics', got %d", len(result.Products))
+	}
+	if result.TotalFound != 2 {
+		t.Errorf("Expected total_found = 2, got %d", result.TotalFound)
+	}
+
+	// Test case-insensitive search (searching in category field)
+	result, err = store.SearchProducts("books", 10, 5)
+	if err != nil {
+		t.Errorf("SearchProducts() error = %v", err)
+	}
+	if len(result.Products) != 2 {
+		t.Errorf("Expected 2 products for case-insensitive 'books' (should match Books category), got %d", len(result.Products))
+	}
+
+	// Test maxResults limit
+	result, err = store.SearchProducts("Electronics", 10, 1)
+	if err != nil {
+		t.Errorf("SearchProducts() error = %v", err)
+	}
+	if len(result.Products) != 1 {
+		t.Errorf("Expected 1 product with maxResults=1, got %d", len(result.Products))
+	}
+	if result.TotalFound != 2 { // Should still find both, but only return 1
+		t.Errorf("Expected total_found = 2 even with maxResults=1, got %d", result.TotalFound)
 	}
 }
