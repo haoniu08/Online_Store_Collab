@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 )
 
 // Product represents a product in the e-commerce system
@@ -113,4 +114,39 @@ func NewError(errorCode, message, details string) *Error {
 func (e *Error) ToJSON() []byte {
 	data, _ := json.Marshal(e)
 	return data
+}
+
+// NewProduct creates a new Product with given parameters
+func NewProduct(id int32, name, category, brand, description string) *Product {
+	return &Product{
+		ProductID:    id,
+		SKU:          fmt.Sprintf("SKU-%d", id),
+		Manufacturer: brand, // Use brand as manufacturer for consistency
+		CategoryID:   getCategoryID(category),
+		Weight:       int32(100 + (id % 900)), // Weight between 100-999
+		SomeOtherID:  id,
+		Name:         name,
+		Category:     category,
+		Description:  description,
+		Brand:        brand,
+	}
+}
+
+// getCategoryID maps category names to IDs for consistency
+func getCategoryID(category string) int32 {
+	categoryMap := map[string]int32{
+		"Electronics": 1,
+		"Books":       2,
+		"Home":        3,
+		"Sports":      4,
+		"Clothing":    5,
+		"Beauty":      6,
+		"Toys":        7,
+		"Automotive":  8,
+	}
+
+	if id, exists := categoryMap[category]; exists {
+		return id
+	}
+	return 1 // Default to Electronics
 }
