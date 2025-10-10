@@ -1,0 +1,86 @@
+services:
+  # Product API service for Homework 6 testing
+  product-api:
+    build:
+      context: ..  # Build from parent directory
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    # Resource limits to simulate ECS Fargate constraints
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'    # 256 CPU units (0.25 vCPU)
+          memory: 512M    # 512 MB memory
+        reservations:
+          cpus: '0.1'
+          memory: 256M
+    networks:
+      - hw6-loadtest
+
+  # Locust master with web UI for monitoring
+  locust-master:
+    image: locustio/locust:2.15.1
+    ports:
+      - "8089:8089"  # Web UI
+      - "5557:5557"  # Master communication port
+    volumes:
+      - ./locustfile.py:/mnt/locust/locustfile.py
+      - ./results:/mnt/locust/results
+    command: >
+      -f /mnt/locust/locustfile.py 
+      --master 
+      --master-bind-port=5557
+      --web-host=0.0.0.0
+      --web-port=8089
+    depends_on:
+      product-api:
+        condition: service_healthy
+    environment:
+      - LOCUST_HOST=http://product-api:8080
+    networks:
+      - hw6-loadtest
+
+  # Locust workers (scale with: docker-compose up --scale locust-worker=4)
+  locust-worker:
+    image: locustio/locust:2.15.1
+    volumes:
+      - ./locustfile.py:/mnt/locust/locustfile.py
+    command: >
+      -f /mnt/locust/locustfile.py 
+      --worker 
+      --master-host=locust-master 
+      --master-port=5557
+    depends_on:
+      - locust-master
+    networks:
+      - hw6-loadtest
+
+  # Optional: Monitoring with lightweight metrics
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    ports:
+      - "8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    depends_on:
+      - product-api
+    networks:
+      - hw6-loadtest
+    profiles:
+      - monitoring
+
+networks:
+  hw6-loadtest:
+    driver: bridge
