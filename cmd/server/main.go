@@ -27,7 +27,10 @@ func main() {
 	// Setup router
 	router := mux.NewRouter()
 
-	// Product endpoints
+	// Product endpoints - order matters! Specific routes before parameterized ones
+	// Search endpoint for Homework 6 - searches exactly 100 products per request
+	router.HandleFunc("/products/search", productHandler.SearchProducts).Methods("GET")
+
 	router.HandleFunc("/products/{productId}", productHandler.GetProduct).Methods("GET")
 	router.HandleFunc("/products/{productId}/details", productHandler.AddProductDetails).Methods("POST")
 
