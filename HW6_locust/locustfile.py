@@ -51,7 +51,7 @@ class SearchLoadTestUser(FastHttpUser):
         "electronics", "ALPHA", "beta", "SPORTS"
     ]
     
-    @task(10)  # Primary task - search products
+    @task  # Only task - search products (100% of requests)
     def search_products(self):
         """
         GET /products/search?q={query}
@@ -61,6 +61,8 @@ class SearchLoadTestUser(FastHttpUser):
         2. Search in name and category fields (case-insensitive)
         3. Return max 20 results with total count
         4. Include search time in response
+        
+        All requests will be search operations to maximize CPU load testing.
         """
         query = random.choice(self.search_terms)
         
@@ -94,69 +96,6 @@ class SearchLoadTestUser(FastHttpUser):
                     response.failure(f"JSON parsing failed: {str(e)}")
             else:
                 response.failure(f"Search failed with status {response.status_code}")
-    
-    @task(2)  # Secondary task - health check (for ALB health checks)
-    def health_check(self):
-        """
-        GET /health
-        
-        Health checks are important for load balancer functionality.
-        This simulates ALB health check behavior.
-        """
-        with self.client.get(
-            "/health",
-            catch_response=True,
-            name="/health"
-        ) as response:
-            if response.status_code == 200:
-                response.success()
-            else:
-                response.failure(f"Health check failed: {response.status_code}")
-    
-    @task(1)  # Edge case - empty search
-    def empty_search(self):
-        """
-        Test error handling for empty search queries.
-        This should return a 400 Bad Request.
-        """
-        with self.client.get(
-            "/products/search?q=",
-            catch_response=True,
-            name="/products/search (empty)"
-        ) as response:
-            if response.status_code == 400:
-                response.success()  # 400 is expected for empty query
-            else:
-                response.failure(f"Expected 400 for empty query, got {response.status_code}")
-    
-    @task(1)  # Edge case - no results
-    def no_results_search(self):
-        """
-        Search for terms that should return no results.
-        Tests the search performance when no matches are found.
-        """
-        no_result_terms = [
-            "ZZZZZZ", "NoResultsExpected", "!@#$%", 
-            "VeryUnlikelySearchTerm", "9999999999"
-        ]
-        query = random.choice(no_result_terms)
-        
-        with self.client.get(
-            f"/products/search?q={query}",
-            catch_response=True,
-            name="/products/search (no results)"
-        ) as response:
-            if response.status_code == 200:
-                try:
-                    data = response.json()
-                    if data["total_found"] == 0 and len(data["products"]) == 0:
-                        response.success()
-                    else:
-                        response.failure(f"Expected no results, got {data['total_found']}")
-                except Exception as e:
-                    response.failure(f"JSON parsing failed: {str(e)}")
-            else:
-                response.failure(f"No results search failed: {response.status_code}")
 
 
 # Note: Locust will use the SearchLoadTestUser class above for all testing scenarios

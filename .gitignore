@@ -87,3 +87,7 @@ img_tests/
 
 Homework6.md
 server
+
+*.pdf
+*.png
+*.pyc

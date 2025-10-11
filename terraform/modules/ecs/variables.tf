@@ -51,12 +51,12 @@ variable "region" {
 
 variable "cpu" {
   type        = string
-  default     = "512"
+  default     = "256"
   description = "vCPU units"
 }
 
 variable "memory" {
   type        = string
-  default     = "1024"
+  default     = "512"
   description = "Memory (MiB)"
 }

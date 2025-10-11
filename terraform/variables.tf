@@ -34,12 +34,12 @@ variable "log_retention_days" {
 # ECS Task CPU and Memory
 variable "cpu" {
   type        = string
-  default     = "512"
+  default     = "256"
   description = "CPU units for ECS task (256, 512, 1024, 2048, 4096)"
 }
 
 variable "memory" {
   type        = string
-  default     = "1024"
+  default     = "512"
   description = "Memory (MiB) for ECS task"
 }
