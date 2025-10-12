@@ -1,4 +1,4 @@
-# Wire together four focused modules: network, ecr, logging, ecs.
+# Wire together modules: network, ecr, logging, alb, ecs with auto scaling
 
 module "network" {
   source         = "./modules/network"
@@ -17,6 +17,16 @@ module "logging" {
   retention_in_days = var.log_retention_days
 }
 
+# Application Load Balancer for horizontal scaling
+module "alb" {
+  source             = "./modules/alb"
+  service_name       = var.service_name
+  container_port     = var.container_port
+  subnet_ids         = module.network.subnet_ids
+  security_group_ids = [module.network.alb_security_group_id]
+  vpc_id             = module.network.vpc_id
+}
+
 # Reuse an existing IAM role for ECS tasks
 data "aws_iam_role" "lab_role" {
   name = "LabRole"
@@ -28,14 +38,19 @@ module "ecs" {
   image              = "${module.ecr.repository_url}:latest"
   container_port     = var.container_port
   subnet_ids         = module.network.subnet_ids
-  security_group_ids = [module.network.security_group_id]
+  security_group_ids = [module.network.ecs_security_group_id]
   execution_role_arn = data.aws_iam_role.lab_role.arn
   task_role_arn      = data.aws_iam_role.lab_role.arn
   log_group_name     = module.logging.log_group_name
-  ecs_count          = var.ecs_count
+  ecs_count          = var.min_instances
   region             = var.aws_region
   cpu                = var.cpu
   memory             = var.memory
+  target_group_arn   = module.alb.target_group_arn
+  alb_listener_arn   = module.alb.listener_arn
+  min_capacity       = var.min_instances
+  max_capacity       = var.max_instances
+  cpu_target_percentage = var.cpu_target_percentage
 }
 
 

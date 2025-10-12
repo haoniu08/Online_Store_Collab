@@ -60,3 +60,43 @@ variable "memory" {
   default     = "512"
   description = "Memory (MiB)"
 }
+
+variable "target_group_arn" {
+  type        = string
+  description = "ARN of the ALB target group"
+}
+
+variable "alb_listener_arn" {
+  type        = string
+  description = "ARN of the ALB listener (for dependency)"
+}
+
+variable "min_capacity" {
+  type        = number
+  default     = 2
+  description = "Minimum number of ECS tasks"
+}
+
+variable "max_capacity" {
+  type        = number
+  default     = 4
+  description = "Maximum number of ECS tasks"
+}
+
+variable "cpu_target_percentage" {
+  type        = number
+  default     = 70
+  description = "Target CPU utilization percentage for auto scaling"
+}
+
+variable "scale_out_cooldown" {
+  type        = number
+  default     = 300
+  description = "Scale out cooldown in seconds"
+}
+
+variable "scale_in_cooldown" {
+  type        = number
+  default     = 300
+  description = "Scale in cooldown in seconds"
+}
