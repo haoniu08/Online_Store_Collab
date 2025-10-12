@@ -43,3 +43,22 @@ variable "memory" {
   default     = "512"
   description = "Memory (MiB) for ECS task"
 }
+
+# Auto Scaling Configuration
+variable "min_instances" {
+  type        = number
+  default     = 2
+  description = "Minimum number of ECS tasks"
+}
+
+variable "max_instances" {
+  type        = number
+  default     = 4
+  description = "Maximum number of ECS tasks"
+}
+
+variable "cpu_target_percentage" {
+  type        = number
+  default     = 70
+  description = "Target CPU utilization percentage for auto scaling"
+}
