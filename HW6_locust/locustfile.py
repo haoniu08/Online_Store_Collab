@@ -31,8 +31,12 @@ class SearchLoadTestUser(FastHttpUser):
     - High users (>=16): Aggressive breaking point testing
     """
     
-    # Adaptive wait time based on user count - will be set dynamically
-    wait_time = between(0.1, 0.5)  # Default: 100-500ms between requests
+    # Maximum request rate - no waiting between requests for circuit breaker testing
+    wait_time = between(0, 0)  # No delay - fire requests as fast as possible
+    
+    # Connection pooling for better performance
+    connection_timeout = 10.0
+    network_timeout = 10.0
     
     # Common search terms that will find results in our generated data
     search_terms = [
