@@ -1,11 +1,9 @@
 package handlers
 
 import (
-	"CS6650_Online_Store/internal/circuitbreaker"
 	"CS6650_Online_Store/internal/models"
 	"CS6650_Online_Store/internal/store"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"strconv"
@@ -15,23 +13,12 @@ import (
 )
 
 type ProductHandler struct {
-	store         *store.ProductStore
-	searchBreaker *circuitbreaker.CircuitBreaker
+	store *store.ProductStore
 }
 
 // NewProductHandler creates a new product handler with circuit breaker protection
 func NewProductHandler(store *store.ProductStore) *ProductHandler {
-	// Configure circuit breaker for search operations
-	searchBreakerConfig := circuitbreaker.Config{
-		FailureThreshold: 5,                // Open after 5 failures
-		RecoveryTimeout:  30 * time.Second, // Wait 30 seconds before trying again
-		SuccessThreshold: 3,                // Need 3 successes to close circuit
-	}
-
-	return &ProductHandler{
-		store:         store,
-		searchBreaker: circuitbreaker.NewCircuitBreaker(searchBreakerConfig),
-	}
+	return &ProductHandler{store: store}
 }
 
 // GetProduct handles GET /products/{productId}
@@ -135,57 +122,31 @@ func (h *ProductHandler) SearchProducts(w http.ResponseWriter, r *http.Request) 
 
 	// Record start time for performance measurement
 	startTime := time.Now()
-	var searchResult *models.SearchResponse
 
-	// Execute search with circuit breaker protection
-	err := h.searchBreaker.Execute(func() error {
-		var searchErr error
-		searchResult, searchErr = h.store.SearchProducts(query, 100, 20)
-
-		// Consider slow responses (>2 seconds) as failures to trigger circuit breaker
-		if time.Since(startTime) > 2*time.Second {
-			return errors.New("search operation too slow - response time exceeded 2 seconds")
-		}
-
-		return searchErr
-	})
-
+	searchResult, err := h.store.SearchProducts(query, 100, 20)
 	if err != nil {
-		// Check if error is from circuit breaker
-		if err.Error() == "circuit breaker is open - service temporarily unavailable" {
-			respondWithError(w, http.StatusServiceUnavailable, "SERVICE_UNAVAILABLE",
-				"Search service temporarily unavailable", "Circuit breaker is open due to high failure rate. Please try again later.")
-			return
-		}
-
 		respondWithError(w, http.StatusInternalServerError, "INTERNAL_ERROR",
 			"Search failed", err.Error())
 		return
 	}
 
-	// Add search time to response
+	// Consider very slow responses as degraded
 	searchDuration := time.Since(startTime)
-	searchResult.SearchTime = searchDuration.String()
+	if searchDuration > 2*time.Second {
+		respondWithError(w, http.StatusServiceUnavailable, "SERVICE_UNAVAILABLE",
+			"Search service temporarily unavailable", "Search operation exceeded acceptable latency")
+		return
+	}
 
-	// Return search results
+	searchResult.SearchTime = searchDuration.String()
 	respondWithJSON(w, http.StatusOK, searchResult)
 }
 
 // HealthCheck handles GET /health - returns system health and circuit breaker status
 func (h *ProductHandler) HealthCheck(w http.ResponseWriter, r *http.Request) {
-	metrics := h.searchBreaker.GetMetrics()
-
 	healthResponse := map[string]interface{}{
-		"status":          "healthy",
-		"timestamp":       time.Now().Format(time.RFC3339),
-		"circuit_breaker": metrics,
-	}
-
-	// Return 503 if circuit breaker is open
-	if h.searchBreaker.GetState() == circuitbreaker.StateOpen {
-		healthResponse["status"] = "degraded"
-		respondWithJSON(w, http.StatusServiceUnavailable, healthResponse)
-		return
+		"status":    "healthy",
+		"timestamp": time.Now().Format(time.RFC3339),
 	}
 
 	respondWithJSON(w, http.StatusOK, healthResponse)
