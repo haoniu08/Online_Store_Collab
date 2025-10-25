@@ -25,6 +25,24 @@ resource "aws_security_group" "alb" {
     description = "Allow HTTP from internet"
   }
 
+  # Temporary / testing: allow the developer IP to access ALB on HTTP and HTTPS
+  # Replace or remove this rule for production use.
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["208.98.212.98/32"]
+    description = "Allow developer IP HTTP access"
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["208.98.212.98/32"]
+    description = "Allow developer IP HTTPS access"
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
