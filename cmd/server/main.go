@@ -34,11 +34,8 @@ func main() {
 	router.HandleFunc("/products/{productId}", productHandler.GetProduct).Methods("GET")
 	router.HandleFunc("/products/{productId}/details", productHandler.AddProductDetails).Methods("POST")
 
-	// Health check endpoint (useful for load balancer)
-	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-	}).Methods("GET")
+	// Health check endpoint with circuit breaker status
+	router.HandleFunc("/health", productHandler.HealthCheck).Methods("GET")
 
 	// Logging middleware
 	router.Use(loggingMiddleware)
