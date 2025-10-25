@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 
 # Build the application
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o CS6650_Online_Store ./cmd/server
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o Online_Store_Collab ./cmd/server
 
 # Runtime stage
 FROM alpine:latest
@@ -25,10 +25,10 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
 # Copy binary from builder
-COPY --from=builder /app/CS6650_Online_Store .
+COPY --from=builder /app/Online_Store_Collab .
 
 # Expose port
 EXPOSE 8080
 
 # Run the application
-CMD ["./CS6650_Online_Store"]
+CMD ["./Online_Store_Collab"]
