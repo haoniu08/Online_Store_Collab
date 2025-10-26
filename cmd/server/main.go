@@ -23,9 +23,14 @@ func main() {
 
 	// Initialize handlers
 	productHandler := handlers.NewProductHandler(productStore)
+	orderHandler := handlers.NewOrderHandler()
 
 	// Setup router
 	router := mux.NewRouter()
+
+	// Order endpoints for Homework 7
+	router.HandleFunc("/orders/sync", orderHandler.ProcessOrderSync).Methods("POST")
+	router.HandleFunc("/orders/async", orderHandler.ProcessOrderAsync).Methods("POST")
 
 	// Product endpoints - order matters! Specific routes before parameterized ones
 	// Search endpoint for Homework 6 - searches exactly 100 products per request

@@ -17,6 +17,21 @@ module "logging" {
   retention_in_days = var.log_retention_days
 }
 
+# SNS Topic for order processing events (Homework 7)
+module "sns" {
+  source       = "./modules/sns"
+  service_name = var.service_name
+  environment  = "dev"
+}
+
+# SQS Queue for order processing (Homework 7)
+module "sqs" {
+  source        = "./modules/sqs"
+  service_name  = var.service_name
+  environment   = "dev"
+  sns_topic_arn = module.sns.topic_arn
+}
+
 # Application Load Balancer for horizontal scaling
 module "alb" {
   source             = "./modules/alb"
@@ -35,7 +50,7 @@ data "aws_iam_role" "lab_role" {
 module "ecs" {
   source             = "./modules/ecs"
   service_name       = var.service_name
-  image              = "${module.ecr.repository_url}:circuit-breaker"
+  image              = "${module.ecr.repository_url}:api-server"
   container_port     = var.container_port
   subnet_ids         = module.network.subnet_ids
   security_group_ids = [module.network.ecs_security_group_id]
@@ -51,22 +66,56 @@ module "ecs" {
   min_capacity       = var.min_instances
   max_capacity       = var.max_instances
   cpu_target_percentage = var.cpu_target_percentage
+
+  # Pass SNS and SQS info to containers (Homework 7)
+  sns_topic_arn      = module.sns.topic_arn
+  sqs_queue_url      = module.sqs.queue_url
+}
+
+# Order Processor ECS Service (Homework 7)
+module "ecs_processor" {
+  source             = "./modules/ecs_processor"
+  service_name       = var.service_name
+  cluster_id         = module.ecs.cluster_id
+  image              = "${module.ecr.repository_url}:processor"
+  subnet_ids         = module.network.subnet_ids
+  security_group_ids = [module.network.ecs_security_group_id]
+  execution_role_arn = data.aws_iam_role.lab_role.arn
+  task_role_arn      = data.aws_iam_role.lab_role.arn
+  log_group_name     = module.logging.log_group_name
+  desired_count      = 1  # Start with 1 task as per assignment
+  region             = var.aws_region
+  cpu                = var.cpu
+  memory             = var.memory
+  sqs_queue_url      = module.sqs.queue_url
+  worker_count       = 100  # Phase 5: Testing with 100 worker goroutines (assignment maximum)
 }
 
 
-// Build & push the Go app image with circuit breaker into ECR
+// Build & push the API server image into ECR
 resource "docker_image" "app" {
-  # Use the URL from the ecr module, and tag it "circuit-breaker"
-  name = "${module.ecr.repository_url}:circuit-breaker"
+  name = "${module.ecr.repository_url}:api-server"
 
   build {
-    # relative path from terraform/ to project root
     context = ".."
-    # Dockerfile is in the project root
+    dockerfile = "../Dockerfile"
   }
 }
 
 resource "docker_registry_image" "app" {
-  # this will push :circuit-breaker → ECR
   name = docker_image.app.name
+}
+
+// Build & push the order processor image into ECR
+resource "docker_image" "processor" {
+  name = "${module.ecr.repository_url}:processor"
+
+  build {
+    context = ".."
+    dockerfile = "../Dockerfile.processor"
+  }
+}
+
+resource "docker_registry_image" "processor" {
+  name = docker_image.processor.name
 }
