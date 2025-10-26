@@ -1,0 +1,19 @@
+FROM golang:1.23 AS build
+
+WORKDIR /src
+
+# Download deps
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source and build the Lambda bootstrap binary
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bootstrap ./cmd/lambda
+
+FROM public.ecr.aws/lambda/go:1
+
+# Lambda runtime expects the executable at /var/task/bootstrap for custom runtimes
+COPY --from=build /src/bootstrap /var/task/bootstrap
+
+# Run the bootstrap as the Lambda entrypoint
+CMD ["bootstrap"]

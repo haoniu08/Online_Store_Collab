@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"context"
 	"CS6650_Online_Store/internal/models"
 	"encoding/json"
 	"log"
@@ -139,25 +140,13 @@ func (p *OrderProcessor) processMessage(message *sqs.Message) {
 	log.Printf("Processing order %s (customer %d) with %d items",
 		order.OrderID, order.CustomerID, len(order.Items))
 
-	// Simulate payment processing with bottleneck
-	// This is the same 3-second bottleneck as synchronous processing
-	startTime := time.Now()
-
-	// Acquire payment gateway lock (blocks if busy)
-	p.paymentGateway <- struct{}{}
-	log.Printf("Order %s acquired payment gateway lock", order.OrderID)
-
-	// Simulate 3-second payment verification
-	time.Sleep(3 * time.Second)
-
-	// Release lock
-	<-p.paymentGateway
-
-	processingTime := time.Since(startTime)
-	log.Printf("Order %s payment completed in %v", order.OrderID, processingTime)
-
-	// Update order status
-	order.Status = models.StatusCompleted
+	// Use a cancellable context for processing (could be extended to propagate timeouts)
+	ctx := context.Background()
+	if err := p.processOrder(ctx, &order); err != nil {
+		log.Printf("Order %s processing failed: %v", order.OrderID, err)
+		// Do not delete message so it can be retried
+		return
+	}
 
 	// Delete message from SQS (order processed successfully)
 	deleteInput := &sqs.DeleteMessageInput{

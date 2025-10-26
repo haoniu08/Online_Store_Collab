@@ -1,396 +1,288 @@
-# CS6650 Online Store - Product API
+# CS6650 Online Store Collaboration Project
 
-A scalable Go-based REST API for product management, deployed on AWS ECS with comprehensive load testing capabilities.
+## Overview
 
-## 🏗️ Architecture Overview
+This project demonstrates the evolution of an e-commerce order processing system from a simple synchronous approach to a sophisticated serverless architecture. We built and tested three different approaches to handle flash sale traffic, learning when to optimize code versus when to scale infrastructure.
 
-- **Backend**: Go 1.24 with Gorilla Mux router
-- **Storage**: Thread-safe in-memory store with sync.RWMutex
-- **Containerization**: Docker multi-stage builds
-- **Infrastructure**: AWS ECS Fargate with Terraform
-- **Load Testing**: Locust with HttpUser vs FastHttpUser comparison
+**What We Built:** An online store that can handle massive traffic spikes (like Black Friday sales) without crashing or making customers wait.
 
-## 📁 Project Structure
+**Why It Matters:** Real e-commerce sites face sudden traffic spikes that can break traditional systems. We show how modern cloud architecture solves these problems.
+
+---
+
+## Project Structure
 
 ```
-├── cmd/
-│   └── server/              # Main server application
-│       ├── main.go         # Server entry point
-│       └── main_test.go    # Server tests
-├── internal/
-│   ├── handlers/           # HTTP request handlers
-│   │   └── product.go     # Product API endpoints
-│   ├── models/            # Data models
-│   │   ├── product.go     # Product struct and validation
-│   │   └── product_test.go
-│   └── store/             # Data storage layer
-│       ├── product_store.go     # Thread-safe in-memory store
-│       └── product_store_test.go
-├── terraform/             # Infrastructure as Code
-│   ├── main.tf           # Main Terraform configuration
-│   ├── variables.tf      # Variable definitions
-│   ├── outputs.tf        # Output values
-│   └── modules/          # Terraform modules
-│       ├── network/      # VPC, subnets, security groups
-│       ├── ecr/          # Container registry
-│       ├── ecs/          # ECS cluster and service
-│       └── logging/      # CloudWatch logs
-├── test_locust/          # Load testing setup
-│   ├── locustfile.py     # Comprehensive load test scenarios
-│   ├── simple_locustfile.py  # HttpUser vs FastHttpUser comparison
-│   └── LOAD_TESTING.md   # Load testing guide
-├── Dockerfile            # Multi-stage Docker build
-└── README.md            # This file
+Online_Store_Collab/
+├── cmd/                          # Application entry points
+│   ├── server/                   # Main API server (orders, products)
+│   ├── processor/                # Background order processor (ECS)
+│   ├── lambda/                   # Serverless order processor
+│   └── test/                     # Testing utilities
+├── internal/                     # Core business logic
+│   ├── handlers/                 # HTTP request handlers
+│   ├── models/                   # Data structures (Order, Product)
+│   ├── store/                    # Data storage logic
+│   └── worker/                   # Order processing logic
+├── terraform/                    # Infrastructure as Code
+│   ├── modules/                  # Reusable infrastructure components
+│   │   ├── alb/                  # Load balancer
+│   │   ├── ecs/                  # Container orchestration
+│   │   ├── lambda/               # Serverless functions
+│   │   ├── network/              # VPC and security
+│   │   ├── sns/                  # Message publishing
+│   │   └── sqs/                  # Message queuing
+│   └── main.tf                   # Main infrastructure configuration
+├── test_locust/                  # Load testing scripts
+├── HW6_locust/                   # Homework 6 load tests
+└── Dockerfile*                   # Container configurations
 ```
 
-## 🚀 Deployment Instructions
+---
+
+## Architecture Evolution
+
+### Phase 1: Synchronous Processing (The Problem)
+```
+Customer → API → Payment Processing (3 seconds) → Response
+```
+**Problem:** When 20 customers try to order simultaneously, they all wait 3 seconds each, creating a bottleneck.
+
+### Phase 2: Asynchronous Processing (The Solution)
+```
+Customer → API → Queue → Immediate Response (< 100ms)
+                ↓
+         Background Workers → Payment Processing
+```
+**Solution:** Accept orders instantly, process them in the background using AWS SNS/SQS.
+
+### Phase 3: Serverless Processing (The Optimization)
+```
+Customer → API → SNS → Lambda → Automatic Scaling
+```
+**Optimization:** Eliminate infrastructure management entirely using AWS Lambda.
+
+---
+
+## Key Components Explained
+
+### 🏪 **Order Processing System**
+- **What it does:** Handles customer orders with payment verification
+- **The challenge:** Payment processing takes 3 seconds (simulating real payment gateways)
+- **The problem:** Multiple customers ordering simultaneously creates delays
+
+### 🔄 **Message Queuing (SNS/SQS)**
+- **SNS (Simple Notification Service):** Like a megaphone that broadcasts order events
+- **SQS (Simple Queue Service):** Like a waiting line that holds orders until workers can process them
+- **Why we need it:** Decouples order acceptance from order processing
+
+### 🐳 **Container Orchestration (ECS)**
+- **What it is:** Manages multiple copies of your application running simultaneously
+- **Why it helps:** Distributes load across multiple servers
+- **Auto-scaling:** Automatically adds more servers when traffic increases
+
+### ⚡ **Serverless Computing (Lambda)**
+- **What it is:** Code that runs without managing servers
+- **Benefits:** Pay only when processing orders, automatic scaling, zero maintenance
+- **Trade-off:** Less control over the environment, but massive operational simplification
+
+---
+
+## How It Works
+
+### 1. **Order Placement**
+```bash
+curl -X POST http://your-store.com/orders/async \
+  -H "Content-Type: application/json" \
+  -d '{"customer_id": 123, "items": [{"product_id": 1, "quantity": 2}]}'
+```
+**Result:** Instant response (< 100ms) with order confirmation
+
+### 2. **Background Processing**
+- Order gets published to SNS topic
+- SQS queue receives the message
+- Worker processes the order (3-second payment simulation)
+- Customer receives confirmation
+
+### 3. **Scaling Under Load**
+- **Low traffic:** 1-2 servers handle everything
+- **High traffic:** Auto-scaling adds more servers automatically
+- **Peak traffic:** Lambda scales to thousands of concurrent executions
+
+---
+
+## Performance Results
+
+### Synchronous Approach (Phase 1)
+- **Orders processed:** 19 in 60 seconds
+- **Customer wait time:** 29.5 seconds average
+- **Success rate:** 100% of attempted orders (but many couldn't even be attempted)
+
+### Asynchronous Approach (Phase 2)
+- **Orders processed:** 3,500+ in 60 seconds
+- **Customer wait time:** 33ms average
+- **Success rate:** 100% of all orders
+- **Improvement:** 184x more orders processed
+
+### Serverless Approach (Phase 3)
+- **Orders processed:** Same as Phase 2
+- **Customer wait time:** 33ms average
+- **Operational overhead:** Zero (vs manual scaling in Phase 2)
+- **Cost:** FREE for startups under 267K orders/month
+
+---
+
+## Infrastructure Components
+
+### 🌐 **Application Load Balancer (ALB)**
+- **Purpose:** Distributes incoming requests across multiple servers
+- **Health checks:** Ensures only healthy servers receive traffic
+- **SSL termination:** Handles HTTPS encryption
+
+### 🏗️ **ECS Fargate**
+- **Purpose:** Runs containers without managing servers
+- **Auto-scaling:** Automatically adjusts server count based on demand
+- **Resource limits:** CPU and memory constraints per container
+
+### 📨 **SNS (Simple Notification Service)**
+- **Purpose:** Publishes order events to multiple subscribers
+- **Reliability:** Guarantees message delivery
+- **Fan-out:** One order can trigger multiple processes
+
+### 📋 **SQS (Simple Queue Service)**
+- **Purpose:** Stores orders until workers can process them
+- **Durability:** Messages persist even if workers fail
+- **Long polling:** Efficiently waits for new messages
+
+### ⚡ **Lambda Functions**
+- **Purpose:** Processes orders without managing servers
+- **Scaling:** Automatically handles any load
+- **Cost:** Pay only for actual processing time
+
+---
+
+## Testing Strategy
+
+### 🧪 **Load Testing with Locust**
+- **Tool:** Python-based load testing framework
+- **Scenarios:** Normal load (5 users) vs Flash sale (20 users)
+- **Metrics:** Response time, success rate, throughput
+
+### 📊 **Monitoring with CloudWatch**
+- **Metrics:** CPU usage, memory usage, queue depth
+- **Alerts:** Notifications when systems approach limits
+- **Dashboards:** Visual representation of system health
+
+### 🔍 **Cold Start Analysis**
+- **What:** Time to initialize Lambda function
+- **Impact:** 188ms to 1409ms overhead on 3-second processing
+- **Conclusion:** Negligible impact for payment processing
+
+---
+
+## Cost Analysis
+
+### 💰 **ECS Approach**
+- **Fixed cost:** $17/month (always running)
+- **Scaling cost:** Additional servers as needed
+- **Operational cost:** Manual monitoring and scaling
+
+### 💰 **Lambda Approach**
+- **Variable cost:** Pay per request
+- **Free tier:** 1M requests + 400K GB-seconds monthly
+- **Break-even:** ~1M orders/month vs ECS
+- **Operational cost:** Zero (AWS manages everything)
+
+### 📈 **Cost Comparison**
+| Monthly Orders | ECS Cost | Lambda Cost | Savings
+|----------------|----------|-------------|----------
+| 10,000         | $17      | $0          | $17 (100%)
+| 100,000        | $17      | $0          | $17 (100%)
+| 267,000        | $17      | $0.08       | $16.92 (99.5%)
+| 1,000,000      | $17      | $25.20      | -$8.20 (Lambda more expensive)
+
+---
+
+## Key Learnings
+
+### 🎯 **When to Optimize vs Scale**
+- **Optimize code:** When you can make algorithms faster
+- **Scale infrastructure:** When you need more compute power
+- **Use serverless:** When you want zero operational overhead
+
+### 📈 **Scaling Strategies**
+- **Vertical scaling:** Bigger servers (limited by hardware)
+- **Horizontal scaling:** More servers (limited by coordination)
+- **Serverless scaling:** Automatic scaling (limited by cost)
+
+### 🔄 **Architecture Patterns**
+- **Synchronous:** Simple but doesn't scale
+- **Asynchronous:** Complex but scales well
+- **Serverless:** Simple and scales automatically
+
+---
+
+## Getting Started
 
 ### Prerequisites
+- AWS CLI configured
+- Docker installed
+- Terraform installed
+- Go 1.23+ installed
 
-1. **Go 1.24+**
-2. **Docker** 
-3. **AWS CLI** configured with appropriate permissions
-4. **Terraform** (latest version)
-5. **Python 3.8+** (for load testing)
-
-### 1. Local Development Setup
-
+### Quick Start
 ```bash
-# Clone the repository
-git clone https://github.com/haoniu08/CS6650_Online_Store.git
-cd CS6650_Online_Store
-
-# Run locally
-go run cmd/server/main.go
-# Server starts on http://localhost:8080
-
-# Run tests
-go test ./...
-```
-
-### 2. Docker Deployment
-
-```bash
-# Build the Docker image
-docker build -t product-api .
-
-# Run the container
-docker run -p 8080:8080 product-api
-```
-
-### 3. AWS Infrastructure Deployment
-
-```bash
-# Navigate to terraform directory
+# 1. Deploy infrastructure
 cd terraform
-
-# Initialize Terraform
 terraform init
-
-# Plan the deployment
-terraform plan
-
-# Deploy infrastructure
 terraform apply
-# Type 'yes' when prompted
 
-# Get the public IP of your deployed service
-terraform output ecs_public_ip
-```
+# 2. Build and push containers
+docker build -t your-ecr-repo/api-server .
+docker push your-ecr-repo/api-server
 
-**Note**: The deployment creates:
-- ECS Fargate cluster with 512 CPU / 1024 MiB memory
-- Public subnets with internet gateway
-- Security groups allowing HTTP traffic on port 8080
-- ECR repository for container images
-- CloudWatch logs for monitoring
-
-### 4. Load Testing Setup
-
-```bash
-# Navigate to test directory
+# 3. Run load tests
 cd test_locust
-
-# Create Python virtual environment
-python -m venv venv
-source venv/bin/activate  # On macOS/Linux
-
-# Install dependencies
-pip install locust
-
-# Run load tests against local server
-./venv/bin/locust -f simple_locustfile.py --host=http://localhost:8080
-
-# Run load tests against deployed API (replace with your IP)
-./venv/bin/locust -f simple_locustfile.py --host=http://YOUR_ECS_PUBLIC_IP:8080
-
-# Open Locust web interface
-# Navigate to http://localhost:8089
+locust -f phase1_sync_test.py --host=http://your-alb-dns
 ```
 
-## 📡 API Endpoints
+### Testing Endpoints
+- **Synchronous:** `POST /orders/sync` (waits for processing)
+- **Asynchronous:** `POST /orders/async` (immediate response)
+- **Health check:** `GET /health`
 
-### Base URL
-- **Local**: `http://localhost:8080`
-- **Deployed**: `http://YOUR_ECS_PUBLIC_IP:8080` (get from `terraform output`)
+---
 
-### Available Endpoints
+## Reports and Documentation
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | Health check endpoint |
-| GET | `/products/{id}` | Retrieve product by ID |
-| POST | `/products/{id}/details` | Create or update product |
+- **Homework 6 Report:** `Homework6.md` - Performance bottleneck analysis
+- **Homework 7 Part 2 Report:** `HOMEWORK7_PART2_REPORT.txt` - Synchronous vs Asynchronous comparison
+- **Homework 7 Part 3 Report:** `HW7_PART3_REPORT.txt` - Serverless Lambda analysis
 
-## 🧪 API Testing Examples
+---
 
-### 1. Health Check (200 OK)
+## Team Contributions
 
-```bash
-curl -X GET http://localhost:8080/health
-```
+**Hao Niu:** Part 3 implementation (Lambda serverless architecture)
+- Lambda function development and deployment
+- Cold start analysis and cost comparison
+- Serverless architecture evaluation
 
-**Response:**
-```
-Status: 200 OK
-Body: OK
-```
+**Aaron Wang:** Part 2 implementation (Asynchronous processing)
+- ECS worker scaling experiments
+- SNS/SQS integration
+- Performance analysis and monitoring
 
-### 2. Create Product (204 No Content)
+---
 
-```bash
-curl -X POST http://localhost:8080/products/12345/details \
-  -H "Content-Type: application/json" \
-  -d '{
-    "product_id": 12345,
-    "sku": "SKU-12345-ABC",
-    "manufacturer": "Acme Corporation",
-    "category_id": 10,
-    "weight": 250,
-    "some_other_id": 999
-  }'
-```
+## Conclusion
 
-**Response:**
-```
-Status: 204 No Content
-```
+This project demonstrates the evolution from simple synchronous processing to sophisticated serverless architecture. We learned that:
 
-### 3. Get Product (200 OK)
+1. **Synchronous systems fail under load** - customers wait too long
+2. **Asynchronous systems scale well** - but require operational overhead
+3. **Serverless systems eliminate complexity** - while maintaining performance
 
-```bash
-curl -X GET http://localhost:8080/products/12345
-```
+The key insight: **Modern cloud architecture isn't just about performance—it's about eliminating operational complexity while maintaining reliability and cost efficiency.**
 
-**Response:**
-```json
-Status: 200 OK
-{
-  "product_id": 12345,
-  "sku": "SKU-12345-ABC", 
-  "manufacturer": "Acme Corporation",
-  "category_id": 10,
-  "weight": 250,
-  "some_other_id": 999
-}
-```
-
-### 4. Get Non-Existent Product (404 Not Found)
-
-```bash
-curl -X GET http://localhost:8080/products/99999
-```
-
-**Response:**
-```json
-Status: 404 Not Found
-{
-  "error": "Product not found"
-}
-```
-
-### 5. Invalid Product ID (400 Bad Request)
-
-```bash
-curl -X GET http://localhost:8080/products/abc
-```
-
-**Response:**
-```json
-Status: 400 Bad Request  
-{
-  "error": "Invalid product ID: must be a positive integer"
-}
-```
-
-### 6. Invalid JSON in POST Request (400 Bad Request)
-
-```bash
-curl -X POST http://localhost:8080/products/12345/details \
-  -H "Content-Type: application/json" \
-  -d '{"invalid_json":'
-```
-
-**Response:**
-```json
-Status: 400 Bad Request
-{
-  "error": "Invalid JSON"
-}
-```
-
-### 7. Validation Error (400 Bad Request)
-
-```bash
-curl -X POST http://localhost:8080/products/12345/details \
-  -H "Content-Type: application/json" \
-  -d '{
-    "product_id": -1,
-    "sku": "",
-    "manufacturer": "",
-    "category_id": -5,
-    "weight": -100
-  }'
-```
-
-**Response:**
-```json
-Status: 400 Bad Request
-{
-  "error": "Validation failed: product_id must be positive, sku is required, manufacturer is required, category_id must be positive, weight must be positive"
-}
-```
-
-## 🔧 Key Files Location
-
-| Component | File Path | Description |
-|-----------|-----------|-------------|
-| **Server Code** | `cmd/server/main.go` | Main application entry point |
-| **API Handlers** | `internal/handlers/product.go` | HTTP request handlers |
-| **Data Models** | `internal/models/product.go` | Product struct and validation |
-| **Data Store** | `internal/store/product_store.go` | Thread-safe storage implementation |
-| **Dockerfile** | `./Dockerfile` | Multi-stage container build |
-| **Infrastructure** | `terraform/` | Complete AWS infrastructure |
-| **Load Testing** | `test_locust/` | Performance testing setup |
-
-## 🎯 Load Testing
-
-### HttpUser vs FastHttpUser Comparison
-
-The project includes two user classes for performance testing:
-
-- **ProductAPIUser (HttpUser)**: Better validation and error handling
-- **FastProductAPIUser (FastHttpUser)**: ~20-30% higher performance with connection pooling
-
-### Test Scenarios
-
-1. **Normal Load**: 100 users, 10/sec ramp-up, 5 minutes
-2. **Write-Heavy Load**: 50 users, 5/sec ramp-up, 3 minutes  
-3. **Spike Test**: 500 users, 25/sec ramp-up, 3 minutes
-
-See `test_locust/LOAD_TESTING.md` for detailed instructions.
-
-## 🔒 Security & Best Practices
-
-### .gitignore Configuration
-
-The project includes comprehensive `.gitignore` to exclude:
-
-```gitignore
-# Terraform sensitive files
-*.tfstate
-*.tfstate.*
-*.tfvars
-.terraform/
-
-# Environment files
-.env
-.env.local
-.env.production
-
-# AWS credentials
-.aws/
-*.pem
-*.key
-
-# Build artifacts  
-/bin/
-/pkg/
-vendor/
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Python
-__pycache__/
-*.pyc
-venv/
-.pytest_cache/
-
-# Large files
-*.log
-*.tar.gz
-*.zip
-```
-
-### Infrastructure Security
-
-- Security groups restrict access to port 8080 only
-- ECS tasks run with minimal required permissions
-- Container uses non-root user in production
-- CloudWatch logging for audit trails
-
-## 🚨 Troubleshooting
-
-### Common Issues
-
-1. **ECS Task Exit Code 255**: Reduce CPU/memory allocation in `terraform/modules/ecs/main.tf`
-2. **Large Terraform Files**: Ensure `.gitignore` excludes `*.tfstate` files
-3. **Locust Import Errors**: Use full path to virtual environment locust executable
-4. **Port Conflicts**: Ensure no other services running on ports 8080 or 8089
-
-### Performance Tuning
-
-- Monitor ECS CPU/Memory utilization in CloudWatch
-- Adjust task resource allocation based on load test results
-- Use FastHttpUser for high-throughput scenarios
-- Scale ECS service based on demand
-
-## 📊 Monitoring
-
-### AWS CloudWatch Metrics
-
-- ECS CPU utilization (target: < 80%)
-- ECS Memory utilization (target: < 80%) 
-- Request latency (target: < 200ms GET, < 500ms POST)
-- Error rates (target: < 1%)
-
-### Local Development
-
-```bash
-# View server logs
-go run cmd/server/main.go
-
-# Run with verbose logging
-GO_LOG_LEVEL=debug go run cmd/server/main.go
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Run tests: `go test ./...`
-4. Commit changes: `git commit -am 'Add feature'`
-5. Push to branch: `git push origin feature-name`
-6. Submit a Pull Request
-
-## 📄 License
-
-This project is part of CS6650 coursework at Northeastern University.
+For startups, serverless architecture provides massive cost savings and operational simplification, making it the clear choice for most use cases.

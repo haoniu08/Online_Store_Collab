@@ -119,3 +119,26 @@ resource "docker_image" "processor" {
 resource "docker_registry_image" "processor" {
   name = docker_image.processor.name
 }
+
+// Reference the pre-built lambda image in ECR (for SNS->Lambda deployment)
+data "docker_registry_image" "lambda" {
+  name = "${module.ecr.repository_url}:lambda"
+}
+
+// Conditionally create Lambda infra using the prebuilt docker image
+module "lambda_processor" {
+  source = "./modules/lambda"
+
+  # Create module only when enabled
+  count = var.enable_lambda ? 1 : 0
+
+  image_uri       = data.docker_registry_image.lambda.name
+  function_name   = "${var.service_name}-processor-lambda"
+  lambda_role_arn = data.aws_iam_role.lab_role.arn
+  sns_topic_arn   = module.sns.topic_arn
+  memory_size     = 512
+  timeout         = 30
+  dlq_name        = "${var.service_name}-lambda-dlq"
+  tags            = { Environment = "dev", Name = "${var.service_name}-lambda" }
+}
+

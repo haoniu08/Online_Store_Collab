@@ -62,3 +62,11 @@ variable "cpu_target_percentage" {
   default     = 70
   description = "Target CPU utilization percentage for auto scaling"
 }
+
+# Enable Lambda deployment (image + SNS subscription). Default false to avoid
+# creating Lambda resources during local development or when AWS creds are limited.
+variable "enable_lambda" {
+  type    = bool
+  default = false
+}
+
