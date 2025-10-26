@@ -23,6 +23,21 @@ resource "aws_ecs_task_definition" "this" {
       containerPort = var.container_port
     }]
 
+    environment = [
+      {
+        name  = "AWS_REGION"
+        value = var.region
+      },
+      {
+        name  = "SNS_TOPIC_ARN"
+        value = var.sns_topic_arn
+      },
+      {
+        name  = "SQS_QUEUE_URL"
+        value = var.sqs_queue_url
+      }
+    ]
+
     logConfiguration = {
       logDriver = "awslogs"
       options = {

@@ -1,0 +1,34 @@
+# Dockerfile for Order Processor
+# This worker polls SQS and processes orders in the background
+
+# Build stage
+FROM golang:1.24-alpine AS builder
+
+# Set working directory
+WORKDIR /app
+
+# Copy go mod files
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Build the order processor
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o order-processor ./cmd/processor
+
+# Runtime stage
+FROM alpine:latest
+
+# Install ca-certificates for HTTPS (needed for AWS SDK)
+RUN apk --no-cache add ca-certificates
+
+WORKDIR /root/
+
+# Copy binary from builder
+COPY --from=builder /app/order-processor .
+
+# Run the order processor
+CMD ["./order-processor"]
