@@ -119,6 +119,52 @@ DEPLOYMENT RESULTS:
 ✅ Dead Letter Queue: CS6650L2-lambda-dlq
 ✅ CloudWatch Logs: /aws/lambda/CS6650L2-processor-lambda
 
+LAMBDA FUNCTION ARCHITECTURE VISUALIZATION:
+-------------------------------------------
+
+**High-Level Flow:**
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   SNS Topic     │───▶│  Lambda Function │───▶│ Order Processing│
+│ (Order Events)  │    │   (main.go)      │    │  (3-second sim)  │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                              │
+                              ▼
+                       ┌──────────────────┐
+                       │  CloudWatch Logs │
+                       │ (Cold Start Data)│
+                       └──────────────────┘
+
+**Complete AWS Lambda Architecture:**
+┌─────────────────────────────────────────────────────────────────┐
+│                        AWS Lambda Architecture                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────┐    ┌──────────────┐    ┌─────────────────┐   │
+│  │   SNS Topic │───▶│ Lambda Func  │───▶│ Order Processing│   │
+│  │             │    │  (main.go)   │    │  (3-second sim)  │   │
+│  └─────────────┘    └──────────────┘    └─────────────────┘   │
+│                              │                                 │
+│                              ▼                                 │
+│                       ┌──────────────┐                        │
+│                       │ CloudWatch    │                        │
+│                       │ Logs & Metrics│                        │
+│                       └──────────────┘                        │
+│                                                                 │
+│  ┌─────────────┐    ┌──────────────┐    ┌─────────────────┐   │
+│  │   ECR Repo  │───▶│ Docker Image │───▶│ Lambda Runtime  │   │
+│  │             │    │ (Dockerfile) │    │ (Go 1.23)       │   │
+│  └─────────────┘    └──────────────┘    └─────────────────┘   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+**Code Flow in Lambda Function (cmd/lambda/main.go):**
+1. SNS Event Received → Handler() function called
+2. Create LocalProcessor → worker.NewLocalProcessor()
+3. Parse Order from SNS Message → json.Unmarshal()
+4. Process Order → p.Process(ctx, &ord) (3-second payment simulation)
+5. Log Results → CloudWatch Logs
+6. Return Success/Error → Lambda/SNS retry semantics
+
 ================================================================================
 TESTING: LAMBDA FUNCTION VALIDATION
 ================================================================================
