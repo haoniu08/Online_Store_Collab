@@ -100,3 +100,15 @@ variable "scale_in_cooldown" {
   default     = 300
   description = "Scale in cooldown in seconds"
 }
+
+variable "sns_topic_arn" {
+  type        = string
+  description = "ARN of SNS topic for order processing"
+  default     = ""
+}
+
+variable "sqs_queue_url" {
+  type        = string
+  description = "URL of SQS queue for order processing"
+  default     = ""
+}
