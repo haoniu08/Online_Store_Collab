@@ -1,5 +1,5 @@
-# Dockerfile for API Server (Order Receiver)
-# This handles /orders/sync and /orders/async endpoints
+# Dockerfile for Order Processor
+# This worker polls SQS and processes orders in the background
 
 # Build stage
 FROM golang:1.24-alpine AS builder
@@ -16,8 +16,8 @@ RUN go mod download
 # Copy source code
 COPY . .
 
-# Build the API server
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o api-server ./cmd/server
+# Build the order processor
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o order-processor ./cmd/processor
 
 # Runtime stage
 FROM alpine:latest
@@ -28,10 +28,7 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
 # Copy binary from builder
-COPY --from=builder /app/api-server .
+COPY --from=builder /app/order-processor .
 
-# Expose port
-EXPOSE 8080
-
-# Run the API server
-CMD ["./api-server"]
+# Run the order processor
+CMD ["./order-processor"]
