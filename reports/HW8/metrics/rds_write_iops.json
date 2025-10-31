@@ -1,0 +1,115 @@
+{
+    "Label": "WriteIOPS",
+    "Datapoints": [
+        {
+            "Timestamp": "2025-10-31T07:16:00+00:00",
+            "Maximum": 3.983598906593773,
+            "Unit": "Count/Second"
+        },
+        {
+            "Timestamp": "2025-10-31T06:41:00+00:00",
+            "Maximum": 1.000050002500125,
+            "Unit": "Count/Second"
+        },
+        {
+            "Timestamp": "2025-10-31T07:06:00+00:00",
+            "Maximum": 0.6492533586375668,
+            "Unit": "Count/Second"
+        },
+        {
+            "Timestamp": "2025-10-31T06:31:00+00:00",
+            "Maximum": 243.97092003008274,
+            "Unit": "Count/Second"
+        },
+        {
+            "Timestamp": "2025-10-31T07:51:00+00:00",
+            "Maximum": 0.7000350017500875,
+            "Unit": "Count/Second"
+        },
+        {
+            "Timestamp": "2025-10-31T08:11:00+00:00",
+            "Maximum": 0.716654722421293,
+            "Unit": "Count/Second"
+        },
+        {
+            "Timestamp": "2025-10-31T07:36:00+00:00",
+            "Maximum": 7.6505100340022665,
+            "Unit": "Count/Second"
+        },
+        {
+            "Timestamp": "2025-10-31T07:01:00+00:00",
+            "Maximum": 0.733370001833425,
+            "Unit": "Count/Second"
+        },
+        {
+            "Timestamp": "2025-10-31T08:01:00+00:00",
+            "Maximum": 0.6999416715273727,
+            "Unit": "Count/Second"
+        },
+        {
+            "Timestamp": "2025-10-31T07:26:00+00:00",
+            "Maximum": 4.000933551161938,
+            "Unit": "Count/Second"
+        },
+        {
+            "Timestamp": "2025-10-31T06:51:00+00:00",
+            "Maximum": 0.46675223791028353,
+            "Unit": "Count/Second"
+        },
+        {
+            "Timestamp": "2025-10-31T06:36:00+00:00",
+            "Maximum": 0.8832597283559703,
+            "Unit": "Count/Second"
+        },
+        {
+            "Timestamp": "2025-10-31T07:56:00+00:00",
+            "Maximum": 0.4166388907406173,
+            "Unit": "Count/Second"
+        },
+        {
+            "Timestamp": "2025-10-31T07:21:00+00:00",
+            "Maximum": 8.298755186721992,
+            "Unit": "Count/Second"
+        },
+        {
+            "Timestamp": "2025-10-31T07:46:00+00:00",
+            "Maximum": 0.6498808551765509,
+            "Unit": "Count/Second"
+        },
+        {
+            "Timestamp": "2025-10-31T07:11:00+00:00",
+            "Maximum": 0.48328500483285003,
+            "Unit": "Count/Second"
+        },
+        {
+            "Timestamp": "2025-10-31T06:56:00+00:00",
+            "Maximum": 0.7332355685908546,
+            "Unit": "Count/Second"
+        },
+        {
+            "Timestamp": "2025-10-31T08:16:00+00:00",
+            "Maximum": 0.5998900201629701,
+            "Unit": "Count/Second"
+        },
+        {
+            "Timestamp": "2025-10-31T07:41:00+00:00",
+            "Maximum": 0.716475606504932,
+            "Unit": "Count/Second"
+        },
+        {
+            "Timestamp": "2025-10-31T06:46:00+00:00",
+            "Maximum": 0.5498716966041257,
+            "Unit": "Count/Second"
+        },
+        {
+            "Timestamp": "2025-10-31T08:06:00+00:00",
+            "Maximum": 0.7164159210942836,
+            "Unit": "Count/Second"
+        },
+        {
+            "Timestamp": "2025-10-31T07:31:00+00:00",
+            "Maximum": 8.981537025928148,
+            "Unit": "Count/Second"
+        }
+    ]
+}

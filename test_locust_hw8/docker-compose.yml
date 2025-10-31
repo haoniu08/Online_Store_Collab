@@ -1,0 +1,13 @@
+services:
+  locust:
+    image: locustio/locust:latest
+    ports:
+      - "8089:8089"  # Locust web UI
+    volumes:
+      - .:/mnt/locust
+    working_dir: /mnt/locust
+    command: >
+      -f locustfile.py
+      --host=${LOCUST_HOST}
+    environment:
+      - LOCUST_HOST=${LOCUST_HOST:-http://localhost:8080}

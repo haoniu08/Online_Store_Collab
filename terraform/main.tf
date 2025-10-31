@@ -42,6 +42,17 @@ module "alb" {
   vpc_id             = module.network.vpc_id
 }
 
+# RDS MySQL (Homework 8)
+module "rds" {
+  source                      = "./modules/rds"
+  service_name                = var.service_name
+  vpc_id                      = module.network.vpc_id
+  subnet_ids                  = module.network.subnet_ids
+  allowed_security_group_ids  = [module.network.ecs_security_group_id]
+  db_name                     = var.db_name
+  db_username                 = var.db_username
+}
+
 # Reuse an existing IAM role for ECS tasks
 data "aws_iam_role" "lab_role" {
   name = "LabRole"
@@ -70,6 +81,13 @@ module "ecs" {
   # Pass SNS and SQS info to containers (Homework 7)
   sns_topic_arn      = module.sns.topic_arn
   sqs_queue_url      = module.sqs.queue_url
+
+  # Database env (Homework 8)
+  db_host            = module.rds.endpoint
+  db_port            = tostring(module.rds.port)
+  db_name            = module.rds.db_name
+  db_user            = module.rds.db_username
+  db_password        = module.rds.db_password
 }
 
 # Order Processor ECS Service (Homework 7)

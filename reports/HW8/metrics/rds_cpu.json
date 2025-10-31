@@ -1,0 +1,115 @@
+{
+    "Label": "CPUUtilization",
+    "Datapoints": [
+        {
+            "Timestamp": "2025-10-31T08:11:00+00:00",
+            "Maximum": 5.11359850756213,
+            "Unit": "Percent"
+        },
+        {
+            "Timestamp": "2025-10-31T06:51:00+00:00",
+            "Maximum": 5.108759063255271,
+            "Unit": "Percent"
+        },
+        {
+            "Timestamp": "2025-10-31T07:26:00+00:00",
+            "Maximum": 6.001831349371514,
+            "Unit": "Percent"
+        },
+        {
+            "Timestamp": "2025-10-31T07:01:00+00:00",
+            "Maximum": 5.050758031122687,
+            "Unit": "Percent"
+        },
+        {
+            "Timestamp": "2025-10-31T07:36:00+00:00",
+            "Maximum": 5.6417606960116,
+            "Unit": "Percent"
+        },
+        {
+            "Timestamp": "2025-10-31T07:11:00+00:00",
+            "Maximum": 5.297935890804118,
+            "Unit": "Percent"
+        },
+        {
+            "Timestamp": "2025-10-31T07:46:00+00:00",
+            "Maximum": 4.874918751354144,
+            "Unit": "Percent"
+        },
+        {
+            "Timestamp": "2025-10-31T07:21:00+00:00",
+            "Maximum": 4.55324887209283,
+            "Unit": "Percent"
+        },
+        {
+            "Timestamp": "2025-10-31T07:56:00+00:00",
+            "Maximum": 6.67576746354132,
+            "Unit": "Percent"
+        },
+        {
+            "Timestamp": "2025-10-31T06:36:00+00:00",
+            "Maximum": 7.1751195853264225,
+            "Unit": "Percent"
+        },
+        {
+            "Timestamp": "2025-10-31T07:31:00+00:00",
+            "Maximum": 5.34750449790098,
+            "Unit": "Percent"
+        },
+        {
+            "Timestamp": "2025-10-31T08:06:00+00:00",
+            "Maximum": 4.250425042504251,
+            "Unit": "Percent"
+        },
+        {
+            "Timestamp": "2025-10-31T06:46:00+00:00",
+            "Maximum": 4.883251945800903,
+            "Unit": "Percent"
+        },
+        {
+            "Timestamp": "2025-10-31T07:41:00+00:00",
+            "Maximum": 5.291666666666666,
+            "Unit": "Percent"
+        },
+        {
+            "Timestamp": "2025-10-31T08:16:00+00:00",
+            "Maximum": 3.451610751684119,
+            "Unit": "Percent"
+        },
+        {
+            "Timestamp": "2025-10-31T06:56:00+00:00",
+            "Maximum": 9.238125385268981,
+            "Unit": "Percent"
+        },
+        {
+            "Timestamp": "2025-10-31T07:51:00+00:00",
+            "Maximum": 4.810252996005326,
+            "Unit": "Percent"
+        },
+        {
+            "Timestamp": "2025-10-31T06:31:00+00:00",
+            "Maximum": 52.067534458907645,
+            "Unit": "Percent"
+        },
+        {
+            "Timestamp": "2025-10-31T07:06:00+00:00",
+            "Maximum": 4.816827227574253,
+            "Unit": "Percent"
+        },
+        {
+            "Timestamp": "2025-10-31T08:01:00+00:00",
+            "Maximum": 4.359350515120195,
+            "Unit": "Percent"
+        },
+        {
+            "Timestamp": "2025-10-31T06:41:00+00:00",
+            "Maximum": 6.2919812657299525,
+            "Unit": "Percent"
+        },
+        {
+            "Timestamp": "2025-10-31T07:16:00+00:00",
+            "Maximum": 5.116837227907597,
+            "Unit": "Percent"
+        }
+    ]
+}

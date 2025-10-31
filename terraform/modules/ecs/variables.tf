@@ -112,3 +112,34 @@ variable "sqs_queue_url" {
   description = "URL of SQS queue for order processing"
   default     = ""
 }
+
+# Database configuration (Homework 8)
+variable "db_host" {
+  type        = string
+  description = "MySQL host"
+  default     = ""
+}
+
+variable "db_port" {
+  type        = string
+  description = "MySQL port"
+  default     = "3306"
+}
+
+variable "db_name" {
+  type        = string
+  description = "MySQL database name"
+  default     = "appdb"
+}
+
+variable "db_user" {
+  type        = string
+  description = "MySQL username"
+  default     = "appuser"
+}
+
+variable "db_password" {
+  type        = string
+  description = "MySQL password"
+  default     = ""
+}
