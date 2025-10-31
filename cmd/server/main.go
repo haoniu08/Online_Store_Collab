@@ -3,10 +3,12 @@ package main
 import (
 	"CS6650_Online_Store/internal/handlers"
 	"CS6650_Online_Store/internal/store"
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -18,12 +20,20 @@ func main() {
 		port = "8080"
 	}
 
-	// Initialize store
+	// Initialize in-memory product store
 	productStore := store.NewProductStore()
+
+	// Initialize DB (MySQL) for shopping carts
+	db, err := connectMySQLFromEnv()
+	if err != nil {
+		log.Fatalf("failed to connect to DB: %v", err)
+	}
+	cartRepo := store.NewMySQLCartRepository(db)
 
 	// Initialize handlers
 	productHandler := handlers.NewProductHandler(productStore)
 	orderHandler := handlers.NewOrderHandler()
+	cartHandler := handlers.NewShoppingCartHandler(cartRepo)
 
 	// Setup router
 	router := mux.NewRouter()
@@ -38,6 +48,11 @@ func main() {
 
 	router.HandleFunc("/products/{productId}", productHandler.GetProduct).Methods("GET")
 	router.HandleFunc("/products/{productId}/details", productHandler.AddProductDetails).Methods("POST")
+
+	// Shopping cart endpoints (Homework 8)
+	router.HandleFunc("/shopping-carts", cartHandler.CreateCart).Methods("POST")
+	router.HandleFunc("/shopping-carts/{shoppingCartId}/items", cartHandler.AddItems).Methods("POST")
+	router.HandleFunc("/shopping-carts/{id}", cartHandler.GetCart).Methods("GET")
 
 	// Health check endpoint with circuit breaker status
 	router.HandleFunc("/health", productHandler.HealthCheck).Methods("GET")
@@ -57,4 +72,39 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL.Path)
 		next.ServeHTTP(w, r)
 	})
+}
+
+func connectMySQLFromEnv() (*sql.DB, error) {
+	host := os.Getenv("DB_HOST")
+	if host == "" {
+		host = "127.0.0.1"
+	}
+	port := os.Getenv("DB_PORT")
+	if port == "" {
+		port = "3306"
+	}
+	name := os.Getenv("DB_NAME")
+	if name == "" {
+		name = "appdb"
+	}
+	user := os.Getenv("DB_USER")
+	if user == "" {
+		user = "appuser"
+	}
+	pass := os.Getenv("DB_PASSWORD")
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&charset=utf8mb4,utf8", user, pass, host, port, name)
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, err
+	}
+	// Pooling
+	db.SetMaxOpenConns(20)
+	db.SetMaxIdleConns(10)
+	db.SetConnMaxLifetime(30 * time.Minute)
+	db.SetConnMaxIdleTime(10 * time.Minute)
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
+	return db, nil
 }
