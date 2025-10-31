@@ -85,11 +85,12 @@ img_tests/
 
 **/venv/
 
-Homework6.md
 server
 
 *.pdf
 *.png
 *.pyc
 
+Homework6.md
 Homework7serverless.md
+Homework8.md
