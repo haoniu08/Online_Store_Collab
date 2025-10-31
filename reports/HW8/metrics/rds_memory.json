@@ -1,0 +1,115 @@
+{
+    "Label": "FreeableMemory",
+    "Datapoints": [
+        {
+            "Timestamp": "2025-10-31T07:41:00+00:00",
+            "Minimum": 89579520.0,
+            "Unit": "Bytes"
+        },
+        {
+            "Timestamp": "2025-10-31T08:16:00+00:00",
+            "Minimum": 85917696.0,
+            "Unit": "Bytes"
+        },
+        {
+            "Timestamp": "2025-10-31T07:06:00+00:00",
+            "Minimum": 104271872.0,
+            "Unit": "Bytes"
+        },
+        {
+            "Timestamp": "2025-10-31T07:31:00+00:00",
+            "Minimum": 92667904.0,
+            "Unit": "Bytes"
+        },
+        {
+            "Timestamp": "2025-10-31T08:06:00+00:00",
+            "Minimum": 87367680.0,
+            "Unit": "Bytes"
+        },
+        {
+            "Timestamp": "2025-10-31T06:56:00+00:00",
+            "Minimum": 109166592.0,
+            "Unit": "Bytes"
+        },
+        {
+            "Timestamp": "2025-10-31T07:21:00+00:00",
+            "Minimum": 98390016.0,
+            "Unit": "Bytes"
+        },
+        {
+            "Timestamp": "2025-10-31T06:46:00+00:00",
+            "Minimum": 113025024.0,
+            "Unit": "Bytes"
+        },
+        {
+            "Timestamp": "2025-10-31T07:11:00+00:00",
+            "Minimum": 103165952.0,
+            "Unit": "Bytes"
+        },
+        {
+            "Timestamp": "2025-10-31T07:56:00+00:00",
+            "Minimum": 87539712.0,
+            "Unit": "Bytes"
+        },
+        {
+            "Timestamp": "2025-10-31T06:36:00+00:00",
+            "Minimum": 122585088.0,
+            "Unit": "Bytes"
+        },
+        {
+            "Timestamp": "2025-10-31T07:01:00+00:00",
+            "Minimum": 110039040.0,
+            "Unit": "Bytes"
+        },
+        {
+            "Timestamp": "2025-10-31T07:46:00+00:00",
+            "Minimum": 89563136.0,
+            "Unit": "Bytes"
+        },
+        {
+            "Timestamp": "2025-10-31T06:51:00+00:00",
+            "Minimum": 114245632.0,
+            "Unit": "Bytes"
+        },
+        {
+            "Timestamp": "2025-10-31T07:36:00+00:00",
+            "Minimum": 92975104.0,
+            "Unit": "Bytes"
+        },
+        {
+            "Timestamp": "2025-10-31T08:11:00+00:00",
+            "Minimum": 86659072.0,
+            "Unit": "Bytes"
+        },
+        {
+            "Timestamp": "2025-10-31T08:01:00+00:00",
+            "Minimum": 84074496.0,
+            "Unit": "Bytes"
+        },
+        {
+            "Timestamp": "2025-10-31T06:41:00+00:00",
+            "Minimum": 113315840.0,
+            "Unit": "Bytes"
+        },
+        {
+            "Timestamp": "2025-10-31T07:26:00+00:00",
+            "Minimum": 94670848.0,
+            "Unit": "Bytes"
+        },
+        {
+            "Timestamp": "2025-10-31T07:51:00+00:00",
+            "Minimum": 89374720.0,
+            "Unit": "Bytes"
+        },
+        {
+            "Timestamp": "2025-10-31T06:31:00+00:00",
+            "Minimum": 125804544.0,
+            "Unit": "Bytes"
+        },
+        {
+            "Timestamp": "2025-10-31T07:16:00+00:00",
+            "Minimum": 97705984.0,
+            "Unit": "Bytes"
+        }
+    ]
+}

@@ -1,5 +1,5 @@
 resource "aws_db_subnet_group" "this" {
-  name       = "${var.service_name}-db-subnets"
+  name       = lower("${var.service_name}-db-subnets")
   subnet_ids = var.subnet_ids
 
   tags = {
@@ -29,7 +29,7 @@ resource "aws_security_group" "rds" {
 }
 
 resource "aws_db_instance" "this" {
-  identifier              = "${var.service_name}-mysql"
+  identifier              = lower("${var.service_name}-mysql")
   engine                  = "mysql"
   engine_version          = "8.0"
   instance_class          = "db.t3.micro"
