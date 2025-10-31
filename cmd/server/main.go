@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
@@ -28,6 +29,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to connect to DB: %v", err)
 	}
+
+	// Run migrations on startup (idempotent)
+	if err := runMigrations(db); err != nil {
+		log.Fatalf("failed to run migrations: %v", err)
+	}
+
 	cartRepo := store.NewMySQLCartRepository(db)
 
 	// Initialize handlers
@@ -107,4 +114,48 @@ func connectMySQLFromEnv() (*sql.DB, error) {
 		return nil, err
 	}
 	return db, nil
+}
+
+// runMigrations applies database schema migrations on startup
+// This is idempotent - safe to run multiple times
+func runMigrations(db *sql.DB) error {
+	log.Println("Running database migrations...")
+
+	// Execute migration statements one by one
+	statements := []string{
+		"DROP TABLE IF EXISTS shopping_cart_items",
+		"DROP TABLE IF EXISTS shopping_carts",
+		`CREATE TABLE shopping_carts (
+		  shopping_cart_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+		  customer_id      BIGINT UNSIGNED NOT NULL,
+		  status           ENUM('OPEN','CHECKED_OUT','CANCELLED') NOT NULL DEFAULT 'OPEN',
+		  created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		  updated_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		  PRIMARY KEY (shopping_cart_id),
+		  KEY idx_shopping_carts_customer_id (customer_id)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+		`CREATE TABLE shopping_cart_items (
+		  shopping_cart_id BIGINT UNSIGNED NOT NULL,
+		  product_id       BIGINT UNSIGNED NOT NULL,
+		  quantity         INT UNSIGNED NOT NULL,
+		  created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		  updated_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		  PRIMARY KEY (shopping_cart_id, product_id),
+		  CONSTRAINT fk_items_cart
+		    FOREIGN KEY (shopping_cart_id)
+		    REFERENCES shopping_carts (shopping_cart_id)
+		    ON DELETE CASCADE,
+		  CONSTRAINT chk_item_quantity CHECK (quantity > 0),
+		  KEY idx_items_product_id (product_id)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+	}
+
+	for _, stmt := range statements {
+		if _, err := db.Exec(stmt); err != nil {
+			return fmt.Errorf("migration failed: %w", err)
+		}
+	}
+
+	log.Println("✅ Database migrations completed successfully")
+	return nil
 }
