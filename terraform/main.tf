@@ -81,6 +81,13 @@ module "ecs" {
   # Pass SNS and SQS info to containers (Homework 7)
   sns_topic_arn      = module.sns.topic_arn
   sqs_queue_url      = module.sqs.queue_url
+
+  # Database env (Homework 8)
+  db_host            = module.rds.endpoint
+  db_port            = tostring(module.rds.port)
+  db_name            = module.rds.db_name
+  db_user            = module.rds.db_username
+  db_password        = module.rds.db_password
 }
 
 # Order Processor ECS Service (Homework 7)

@@ -30,3 +30,45 @@
 - Composite PK vs surrogate `item_id`: chose composite for simpler upsert and uniqueness
 - Quantity semantics: replace-by-value for predictability; could switch to `+=` if required
 - No FK to products to decouple from catalog service; validate `product_id` at API layer if needed
+
+## Part III (Implementation)
+
+### Connection Pooling Configuration
+- `SetMaxOpenConns(50)`: supports ~100 concurrent sessions with headroom
+- `SetMaxIdleConns(10)`: reduces overhead while maintaining warm connections
+- `SetConnMaxLifetime(30m)`: prevents stale connections; safe for RDS maintenance windows
+- DSN includes `parseTime=true` for proper timestamp handling
+
+### Transaction Handling
+- Add/Update Item: single transaction wraps cart validation + upsert to ensure atomicity
+- Used prepared statements (`db.PrepareContext`) to prevent SQL injection
+- Rollback on any error; commit only after all operations succeed
+
+### Error Handling & HTTP Status Codes
+- 400 Bad Request: invalid input (missing customer_id, invalid quantity, malformed cart ID)
+- 404 Not Found: cart not found or cart status != OPEN
+- 500 Internal Server Error: DB connection/query failures
+- Validated inputs before DB calls; return structured JSON error responses
+
+### SQL Injection Prevention
+- All queries use parameterized statements (`?` placeholders)
+- No string concatenation or `fmt.Sprintf` in SQL
+- Input validation layer rejects non-numeric IDs early
+
+### Implementation Journey
+- **Initial Approach**: Started with local MySQL (docker), applied migration, implemented repository layer, then wired handlers
+- **Iterations**: Adjusted upsert semantics (replace vs increment quantity); settled on replace for predictability
+- **Pool Tuning**: Initially used default pool settings; after local load testing adjusted MaxOpenConns to 50 based on connection count observations
+
+### Performance Observations
+- GET cart with JOIN: ~5-15ms locally (well under 50ms target)
+- INSERT cart: ~2-5ms; upsert item: ~3-8ms
+- No slow queries observed in initial testing; composite PK and indexes performed as expected
+
+### Schema Modifications
+- None required post-migration; initial design met all functional and performance requirements
+
+### Valuable Learning Moments
+- **Upsert Simplicity**: `INSERT ... ON DUPLICATE KEY UPDATE` eliminated need for separate SELECT + UPDATE logic
+- **Connection Lifetime**: Setting `ConnMaxLifetime` prevents issues with RDS connection recycling
+- **Composite PK Trade-off**: Simplified upsert but requires both `shopping_cart_id` + `product_id` in queries; acceptable for this access pattern
