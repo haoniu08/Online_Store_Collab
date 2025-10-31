@@ -42,6 +42,17 @@ module "alb" {
   vpc_id             = module.network.vpc_id
 }
 
+# RDS MySQL (Homework 8)
+module "rds" {
+  source                      = "./modules/rds"
+  service_name                = var.service_name
+  vpc_id                      = module.network.vpc_id
+  subnet_ids                  = module.network.subnet_ids
+  allowed_security_group_ids  = [module.network.ecs_security_group_id]
+  db_name                     = var.db_name
+  db_username                 = var.db_username
+}
+
 # Reuse an existing IAM role for ECS tasks
 data "aws_iam_role" "lab_role" {
   name = "LabRole"
