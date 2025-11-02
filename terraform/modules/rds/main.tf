@@ -53,8 +53,9 @@ resource "aws_db_instance" "this" {
 }
 
 resource "random_password" "db_password" {
-  length  = 20
-  special = true
+  length           = 20
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"  # Exclude /, @, ", space as they're not allowed by RDS
 }
 
 

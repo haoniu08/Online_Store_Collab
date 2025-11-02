@@ -42,7 +42,7 @@ module "alb" {
   vpc_id             = module.network.vpc_id
 }
 
-# RDS MySQL (Homework 8)
+# RDS MySQL (Homework 8 - Step 1)
 module "rds" {
   source                      = "./modules/rds"
   service_name                = var.service_name
@@ -51,6 +51,13 @@ module "rds" {
   allowed_security_group_ids  = [module.network.ecs_security_group_id]
   db_name                     = var.db_name
   db_username                 = var.db_username
+}
+
+# DynamoDB (Homework 8 - Step 2)
+module "dynamodb" {
+  source       = "./modules/dynamodb"
+  project_name = var.service_name
+  environment  = "dev"
 }
 
 # Reuse an existing IAM role for ECS tasks
@@ -88,6 +95,10 @@ module "ecs" {
   db_name            = module.rds.db_name
   db_user            = module.rds.db_username
   db_password        = module.rds.db_password
+
+  # DynamoDB env (Homework 8 - Step 2)
+  dynamodb_table_name = module.dynamodb.table_name
+  use_dynamodb        = "true"  # Set to "true" to use DynamoDB, "false" for MySQL
 }
 
 # Order Processor ECS Service (Homework 7)
