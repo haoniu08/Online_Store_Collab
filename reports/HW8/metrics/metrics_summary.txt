@@ -1,0 +1,24 @@
+CloudWatch Metrics Summary
+Generated: 2025-10-31 08:21:22 UTC
+Time Range: 2025-10-31T02:21:17 to 2025-10-31T08:21:17 (UTC)
+Region: us-west-2
+
+RDS Metrics:
+- CPU Utilization: ../reports/HW8/metrics/rds_cpu.json
+- Database Connections: ../reports/HW8/metrics/rds_connections.json
+- Read IOPS: ../reports/HW8/metrics/rds_read_iops.json
+- Write IOPS: ../reports/HW8/metrics/rds_write_iops.json
+- Freeable Memory: ../reports/HW8/metrics/rds_memory.json
+
+ECS Metrics:
+- CPU Utilization: ../reports/HW8/metrics/ecs_cpu.json
+- Memory Utilization: ../reports/HW8/metrics/ecs_memory.json
+
+ALB Metrics:
+- Target Response Time: ../reports/HW8/metrics/alb_response_time.json
+- Request Count: ../reports/HW8/metrics/alb_request_count.json
+- HTTP 5xx Errors: ../reports/HW8/metrics/alb_5xx_errors.json
+
+To view metrics in readable format:
+  cat ../reports/HW8/metrics/rds_cpu.json | jq '.Datapoints[] | {Timestamp, Average, Maximum}'
+
