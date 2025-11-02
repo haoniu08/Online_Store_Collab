@@ -62,3 +62,16 @@ variable "cpu_target_percentage" {
   default     = 70
   description = "Target CPU utilization percentage for auto scaling"
 }
+
+# Database settings (Homework 8)
+variable "db_name" {
+  type        = string
+  default     = "appdb"
+  description = "MySQL database name"
+}
+
+variable "db_username" {
+  type        = string
+  default     = "appuser"
+  description = "MySQL master username"
+}

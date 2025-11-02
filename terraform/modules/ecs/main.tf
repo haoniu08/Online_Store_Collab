@@ -35,6 +35,26 @@ resource "aws_ecs_task_definition" "this" {
       {
         name  = "SQS_QUEUE_URL"
         value = var.sqs_queue_url
+      },
+      {
+        name  = "DB_HOST"
+        value = var.db_host
+      },
+      {
+        name  = "DB_PORT"
+        value = var.db_port
+      },
+      {
+        name  = "DB_NAME"
+        value = var.db_name
+      },
+      {
+        name  = "DB_USER"
+        value = var.db_user
+      },
+      {
+        name  = "DB_PASSWORD"
+        value = var.db_password
       }
     ]
 
