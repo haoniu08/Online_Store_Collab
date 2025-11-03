@@ -10,6 +10,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/gorilla/mux"
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -24,18 +27,29 @@ func main() {
 	// Initialize in-memory product store
 	productStore := store.NewProductStore()
 
-	// Initialize DB (MySQL) for shopping carts
-	db, err := connectMySQLFromEnv()
-	if err != nil {
-		log.Fatalf("failed to connect to DB: %v", err)
-	}
+	// Initialize cart repository based on environment variable
+	// 📚 学习点: 使用环境变量切换数据库实现（MySQL vs DynamoDB）
+	var cartRepo store.CartRepository
+	useDynamoDB := os.Getenv("USE_DYNAMODB") == "true"
 
-	// Run migrations on startup (idempotent)
-	if err := runMigrations(db); err != nil {
-		log.Fatalf("failed to run migrations: %v", err)
-	}
+	if useDynamoDB {
+		log.Println("Using DynamoDB for shopping carts")
+		cartRepo = initDynamoDBCartRepo()
+	} else {
+		log.Println("Using MySQL for shopping carts")
+		// Initialize DB (MySQL) for shopping carts
+		db, err := connectMySQLFromEnv()
+		if err != nil {
+			log.Fatalf("failed to connect to DB: %v", err)
+		}
 
-	cartRepo := store.NewMySQLCartRepository(db)
+		// Run migrations on startup (idempotent)
+		if err := runMigrations(db); err != nil {
+			log.Fatalf("failed to run migrations: %v", err)
+		}
+
+		cartRepo = store.NewMySQLCartRepository(db)
+	}
 
 	// Initialize handlers
 	productHandler := handlers.NewProductHandler(productStore)
@@ -158,4 +172,36 @@ func runMigrations(db *sql.DB) error {
 
 	log.Println("✅ Database migrations completed successfully")
 	return nil
+}
+
+// initDynamoDBCartRepo initializes DynamoDB client for shopping carts
+// 📚 学习点: 模仿 order.go 中 SNS 的初始化方式
+func initDynamoDBCartRepo() store.CartRepository {
+	// Get DynamoDB table name from environment
+	tableName := os.Getenv("DYNAMODB_TABLE_NAME")
+	if tableName == "" {
+		log.Fatal("DYNAMODB_TABLE_NAME environment variable is required when USE_DYNAMODB=true")
+	}
+
+	// Get AWS region from environment
+	region := os.Getenv("AWS_REGION")
+	if region == "" {
+		region = "us-west-2" // default region
+	}
+
+	// Create AWS session (same pattern as order.go for SNS)
+	// 📚 学习点: session.NewSession 会自动使用 ECS task role 的 credentials
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String(region),
+	})
+	if err != nil {
+		log.Fatalf("Failed to create AWS session for DynamoDB: %v", err)
+	}
+
+	// Create DynamoDB client
+	dynamoClient := dynamodb.New(sess)
+	log.Printf("✅ DynamoDB client initialized with table: %s in region: %s", tableName, region)
+
+	// Return DynamoDB repository implementation
+	return store.NewDynamoDBCartRepository(dynamoClient, tableName)
 }

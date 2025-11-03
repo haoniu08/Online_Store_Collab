@@ -55,6 +55,14 @@ resource "aws_ecs_task_definition" "this" {
       {
         name  = "DB_PASSWORD"
         value = var.db_password
+      },
+      {
+        name  = "DYNAMODB_TABLE_NAME"
+        value = var.dynamodb_table_name
+      },
+      {
+        name  = "USE_DYNAMODB"
+        value = var.use_dynamodb
       }
     ]
 

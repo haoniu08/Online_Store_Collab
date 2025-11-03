@@ -3,6 +3,7 @@ package handlers
 import (
 	"CS6650_Online_Store/internal/store"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -63,6 +64,7 @@ func (h *ShoppingCartHandler) AddItems(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, `{"error":"INVALID_INPUT","message":"invalid shopping cart state"}`, http.StatusBadRequest)
 			return
 		}
+		log.Printf("ERROR: AddOrUpdateItem failed for cart %d: %v", cartID, err)
 		http.Error(w, `{"error":"SERVER_ERROR","message":"failed to add items"}`, http.StatusInternalServerError)
 		return
 	}

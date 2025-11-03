@@ -143,3 +143,16 @@ variable "db_password" {
   description = "MySQL password"
   default     = ""
 }
+
+# DynamoDB configuration (Homework 8 - Step 2)
+variable "dynamodb_table_name" {
+  type        = string
+  description = "DynamoDB table name for shopping carts"
+  default     = ""
+}
+
+variable "use_dynamodb" {
+  type        = string
+  description = "Set to 'true' to use DynamoDB instead of MySQL"
+  default     = "false"
+}
