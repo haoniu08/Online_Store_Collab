@@ -120,6 +120,24 @@ module "ecs_processor" {
   worker_count       = 100  # Phase 5: Testing with 100 worker goroutines (assignment maximum)
 }
 
+# Order Processor ECS Service (Homework 7)
+module "ecs_processor" {
+  source             = "./modules/ecs_processor"
+  service_name       = var.service_name
+  cluster_id         = module.ecs.cluster_id
+  image              = "${module.ecr.repository_url}:processor"
+  subnet_ids         = module.network.subnet_ids
+  security_group_ids = [module.network.ecs_security_group_id]
+  execution_role_arn = data.aws_iam_role.lab_role.arn
+  task_role_arn      = data.aws_iam_role.lab_role.arn
+  log_group_name     = module.logging.log_group_name
+  desired_count      = 1  # Start with 1 task as per assignment
+  region             = var.aws_region
+  cpu                = var.cpu
+  memory             = var.memory
+  sqs_queue_url      = module.sqs.queue_url
+  worker_count       = 100  # Phase 5: Testing with 100 worker goroutines (assignment maximum)
+}
 
 // Build & push the API server image into ECR
 resource "docker_image" "app" {
